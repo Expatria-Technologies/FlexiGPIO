@@ -11,6 +11,11 @@
         "*.tcc": "cpp",
         "ostream": "cpp",
         "stdlib.h": "c",
-        "hid_device.h": "c"
+        "hid_device.h": "c",
+        "system_error": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp"
     }
 }
