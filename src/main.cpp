@@ -17,15 +17,15 @@
 // setup() & loop()
 //--------------------------------------------------------------------+
 void setup() {
-  Serial.begin(115200);
-  sleep_ms(5);
-  Serial.println("FlexiGPIO I2C Expander 1.0");
+  //Serial.begin(115200);
+  //sleep_ms(5);
+  //Serial.println("FlexiGPIO I2C Expander 1.0");
 
   init_i2c_responder();
 }
 
 void loop() {
-  Serial.flush();
+  //Serial.flush();
   i2c_task();
 }
 

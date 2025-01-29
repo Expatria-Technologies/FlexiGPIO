@@ -50,23 +50,19 @@ static void i2c_slave_handler(i2c_inst_t *i2c, i2c_slave_event_t event) {
 
     switch (event) {
     case I2C_SLAVE_RECEIVE: // master has written some data - goes to the output packet
-        if (mem_address_written < 1 ) {
-            output_context.mem_address = i2c_read_byte(i2c);                
-            mem_address_written++;
-        } else {
-            // save into memory
             output_context.mem[output_context.mem_address] = i2c_read_byte(i2c);
             output_context.mem_address++;
             mem_address_written++;
-        }
         break;
     case I2C_SLAVE_REQUEST: // master is requesting data - comes from the input packet
-        // load from memory
-        i2c_write_byte(i2c, input_context.mem[input_context.mem_address]);
-        input_context.mem_address++;
+          // load from memory
+          i2c_write_byte(i2c, input_context.mem[input_context.mem_address]);
+          input_context.mem_address++;
         break;
     case I2C_SLAVE_FINISH: // master has signalled Stop / Restart
             mem_address_written = 0;
+            input_context.mem_address = 0;
+            output_context.mem_address = 0;
         break;
     default:
         break;
@@ -128,6 +124,7 @@ void i2c_task (void){
 
     //polarity mask resides in the data read from the host.  Polarity is only used for the inputs (for now?)
     inputpacket.polarity_mask = outputpacket.polarity_mask;
+    inputpacket.enable_mask = outputpacket.enable_mask;
 
     //Read the pin values (inputs and outputs)
     getval = gpio_get_all();
@@ -137,7 +134,7 @@ void i2c_task (void){
 
     //Finally, do the necessary math operations on the motor and probe pins to combine then and set the outputs accordingly.
 
-    bool any_alarm_active = (inputpacket.value & 
+    bool any_alarm_active = (getval & 
         ((1 << ALARMX_PIN) | 
         (1 << ALARMY_PIN) | 
         (1 << ALARMZ_PIN) | 
@@ -145,7 +142,11 @@ void i2c_task (void){
         (1 << ALARMB_PIN) | 
         (1 << ALARMC_PIN))) != 0;
 
-   bool probe_or_value = (inputpacket.value & (1 << TOOL_PIN)) | (inputpacket.value & (1 << PROBE_PIN));  
+    //bool probe_or_value = !!(inputpacket.value & (1 << TOOL_PIN)) || !!(inputpacket.value & (1 << PROBE_PIN)); //or
+    bool probe_or_value = !!(getval & (1 << TOOL_PIN)) ^ !!(getval & (1 << PROBE_PIN)); //xor
+
+    gpio_put(MCU_PRB_PIN, probe_or_value);
+    gpio_put(MCU_IRQ_PIN, any_alarm_active);
 
     #if 0 //testing code
 
@@ -300,7 +301,7 @@ void init_i2c_responder (void){
   gpio_set_dir(ALARMC_PIN, GPIO_IN);             
 
   // Setup I2C0 as slave (peripheral)
-  Serial.printf("Setup I2C\r\n");
+ // Serial.printf("Setup I2C\r\n");
   setup_slave();
   sleep_ms(5);
 
