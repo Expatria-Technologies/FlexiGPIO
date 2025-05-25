@@ -8,9 +8,9 @@
         {
             "name": "PlatformIO",
             "includePath": [
-                "c:/Repo/FlexiGPIO/include",
                 "c:/Repo/FlexiGPIO/src",
                 "c:/Repo/FlexiGPIO/.pio/libdeps/pico/SerialTransfer/src",
+                "C:/Users/andrew/.platformio/packages/framework-arduinopico/libraries/SPI/src",
                 "C:/Users/andrew/.platformio/packages/framework-arduinopico/libraries/Wire/src",
                 "C:/Users/andrew/.platformio/packages/framework-arduinopico/cores/rp2040",
                 "C:/Users/andrew/.platformio/packages/framework-arduinopico/cores/rp2040/api/deprecated",
@@ -79,7 +79,6 @@
                 "C:/Users/andrew/.platformio/packages/framework-arduinopico/pico-sdk/lib/btstack/platform/embedded",
                 "C:/Users/andrew/.platformio/packages/framework-arduinopico/include",
                 "C:/Users/andrew/.platformio/packages/framework-arduinopico/variants/generic",
-                "C:/Users/andrew/.platformio/packages/framework-arduinopico/libraries/SPI/src",
                 "c:/Repo/FlexiGPIO/.pio/libdeps/pico/Adafruit SPIFlash/src",
                 "c:/Repo/FlexiGPIO/.pio/libdeps/pico/Pico PIO USB/src",
                 "c:/Repo/FlexiGPIO/.pio/libdeps/pico/SdFat - Adafruit Fork/src",
@@ -138,9 +137,9 @@
             "browse": {
                 "limitSymbolsToIncludedHeaders": true,
                 "path": [
-                    "c:/Repo/FlexiGPIO/include",
                     "c:/Repo/FlexiGPIO/src",
                     "c:/Repo/FlexiGPIO/.pio/libdeps/pico/SerialTransfer/src",
+                    "C:/Users/andrew/.platformio/packages/framework-arduinopico/libraries/SPI/src",
                     "C:/Users/andrew/.platformio/packages/framework-arduinopico/libraries/Wire/src",
                     "C:/Users/andrew/.platformio/packages/framework-arduinopico/cores/rp2040",
                     "C:/Users/andrew/.platformio/packages/framework-arduinopico/cores/rp2040/api/deprecated",
@@ -209,7 +208,6 @@
                     "C:/Users/andrew/.platformio/packages/framework-arduinopico/pico-sdk/lib/btstack/platform/embedded",
                     "C:/Users/andrew/.platformio/packages/framework-arduinopico/include",
                     "C:/Users/andrew/.platformio/packages/framework-arduinopico/variants/generic",
-                    "C:/Users/andrew/.platformio/packages/framework-arduinopico/libraries/SPI/src",
                     "c:/Repo/FlexiGPIO/.pio/libdeps/pico/Adafruit SPIFlash/src",
                     "c:/Repo/FlexiGPIO/.pio/libdeps/pico/Pico PIO USB/src",
                     "c:/Repo/FlexiGPIO/.pio/libdeps/pico/SdFat - Adafruit Fork/src",
@@ -267,7 +265,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=60116",
+                "PLATFORMIO=60118",
                 "ARDUINO_GENERIC_RP2040",
                 "ARDUINO_ARCH_RP2040",
                 "USBD_MAX_POWER_MA=250",

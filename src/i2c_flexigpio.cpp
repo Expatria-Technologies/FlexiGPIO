@@ -43,7 +43,6 @@ uint8_t mem_address_written = 0;
 int character_sent;
 int command_error = 0;
 
-
 // Our handler is called from the I2C ISR, so it must complete quickly. Blocking calls /
 // printing to stdio may interfere with interrupt handling.
 static void i2c_slave_handler(i2c_inst_t *i2c, i2c_slave_event_t event) {
@@ -116,41 +115,54 @@ uint8_t keypad_sendcount (bool clearpin) {
 #endif
 
 void i2c_task (void){
-
-    static uint32_t getval;
     
     //Set the outputs
-    gpio_put_all(outputpacket.value);
+    const uint32_t mask = ~((1 << MCU_PRB_PIN) | (1 << MCU_IRQ_PIN));
+    // Get current state of pins
+    uint32_t mask_values = gpio_get_all() & ~mask;
+    // Apply new values with mask and preserve existing pin states    
+    gpio_put_all((outputpacket.value & mask) | mask_values);
 
     //polarity mask resides in the data read from the host.  Polarity is only used for the inputs (for now?)
     inputpacket.polarity_mask = outputpacket.polarity_mask;
     inputpacket.enable_mask = outputpacket.enable_mask;
+    inputpacket.direction_mask = outputpacket.direction_mask;
 
     //Read the pin values (inputs and outputs)
-    getval = gpio_get_all();
-
-    getval ^= inputpacket.polarity_mask;
-    inputpacket.value = getval;
+    uint32_t getval = gpio_get_all();
+    uint32_t masked = getval & inputpacket.enable_mask;
+    masked ^= (inputpacket.polarity_mask & inputpacket.enable_mask);
+    inputpacket.value = masked;
 
     //Finally, do the necessary math operations on the motor and probe pins to combine then and set the outputs accordingly.
 
-    bool any_alarm_active = (getval & 
-        ((1 << ALARMX_PIN) | 
+    bool any_alarm_active = (inputpacket.value & 
+       ((1 << ALARMX_PIN) | 
         (1 << ALARMY_PIN) | 
         (1 << ALARMZ_PIN) | 
         (1 << ALARMA_PIN) | 
         (1 << ALARMB_PIN) | 
         (1 << ALARMC_PIN))) != 0;
 
-    //bool probe_or_value = !!(inputpacket.value & (1 << TOOL_PIN)) || !!(inputpacket.value & (1 << PROBE_PIN)); //or
-    bool probe_or_value = !!(getval & (1 << TOOL_PIN)) ^ !!(getval & (1 << PROBE_PIN)); //xor
+    bool probe_or_value = (inputpacket.value & (1 << TOOL_PIN)) || (inputpacket.value & (1 << PROBE_PIN)); //or
+    //bool probe_or_value = !!(inputpacket.value & (1 << TOOL_PIN)) ^ !!(inputpacket.value & (1 << PROBE_PIN)); //xor
+
+    //IRQ pins are active high.
+    probe_or_value = probe_or_value;
+    any_alarm_active = any_alarm_active;
+
 
     gpio_put(MCU_PRB_PIN, probe_or_value);
     gpio_put(MCU_IRQ_PIN, any_alarm_active);
 
-    #if 0 //testing code
+    #if 1 //testing code
 
-        Serial.printf("getval ");
+    Serial.printf("getval ");
+    // For multiple bytes
+    Serial.printf("%d", getval);
+    Serial.printf("\r\n");
+
+    Serial.printf("getval ");
     // Print each bit from MSB to LSB
     for (int i = sizeof(getval) * 8 - 1; i >= 0; i--) {
         Serial.printf("%d", (getval >> i) & 1);
@@ -159,7 +171,17 @@ void i2c_task (void){
 
     Serial.printf("inputpacket.polarity_mask ");
     // For multiple bytes
-    Serial.printf("%d", outputpacket.polarity_mask);
+    Serial.printf("%d", inputpacket.polarity_mask);
+    Serial.printf("\r\n");  
+
+    Serial.printf("inputpacket.enable_mask ");
+    // For multiple bytes
+    Serial.printf("%d", inputpacket.enable_mask);
+    Serial.printf("\r\n");  
+
+    Serial.printf("inputpacket.direction_mask ");
+    // For multiple bytes
+    Serial.printf("%d", inputpacket.direction_mask);
     Serial.printf("\r\n");  
 
     Serial.printf("any_alarm_active ");
@@ -177,6 +199,11 @@ void i2c_task (void){
     Serial.printf("%d", inputpacket.value);
     Serial.printf("\r\n");
 
+    Serial.printf("outputpacket.value ");
+    // For multiple bytes
+    Serial.printf("%d", outputpacket.value);
+    Serial.printf("\r\n");
+
     sleep_ms(500);
     #endif
 
@@ -184,7 +211,15 @@ void i2c_task (void){
 
 void init_i2c_responder (void){
 
-  Serial.printf("Setup GPIOS\r\n");
+  //Serial.printf("Setup GPIOS\r\n");
+  inputpacket.value = 0;
+  inputpacket.polarity_mask = 0;
+  inputpacket.enable_mask = 0;
+
+  outputpacket.value = 0;
+  outputpacket.polarity_mask = 0;
+  outputpacket.enable_mask = 0;    
+
 
   //set up gpio output pins  
   gpio_init(MCU_IRQ_PIN);
@@ -301,7 +336,7 @@ void init_i2c_responder (void){
   gpio_set_dir(ALARMC_PIN, GPIO_IN);             
 
   // Setup I2C0 as slave (peripheral)
- // Serial.printf("Setup I2C\r\n");
+  Serial.printf("Setup I2C\r\n");
   setup_slave();
   sleep_ms(5);
 
