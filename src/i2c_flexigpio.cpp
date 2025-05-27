@@ -117,11 +117,12 @@ uint8_t keypad_sendcount (bool clearpin) {
 void i2c_task (void){
     
     //Set the outputs
-    const uint32_t mask = ~((1 << MCU_PRB_PIN) | (1 << MCU_IRQ_PIN));
+    const uint32_t mask = ~((1 << MCU_PRB_PIN) | (1 << MCU_IRQ_PIN) | (1 << I2C_SLAVE_SDA_PIN) | (1 << I2C_SLAVE_SCL_PIN));
     // Get current state of pins
     uint32_t mask_values = gpio_get_all() & ~mask;
     // Apply new values with mask and preserve existing pin states    
     gpio_put_all((outputpacket.value & mask) | mask_values);
+    //gpio_put_all(outputpacket.value);
 
     //polarity mask resides in the data read from the host.  Polarity is only used for the inputs (for now?)
     inputpacket.polarity_mask = outputpacket.polarity_mask;
@@ -151,21 +152,26 @@ void i2c_task (void){
     probe_or_value = probe_or_value;
     any_alarm_active = any_alarm_active;
 
+    //apply inversion to these outputs.
+    if (outputpacket.polarity_mask & (1 << MCU_PRB_PIN))
+      gpio_put(MCU_PRB_PIN, !probe_or_value);
+    else
+      gpio_put(MCU_PRB_PIN, probe_or_value);
 
-    gpio_put(MCU_PRB_PIN, probe_or_value);
+
     gpio_put(MCU_IRQ_PIN, any_alarm_active);
 
-    #if 1 //testing code
+    #if 0 //testing code
 
-    Serial.printf("getval ");
+    Serial.printf("outputpacket.value ");
     // For multiple bytes
-    Serial.printf("%d", getval);
+    Serial.printf("%d", outputpacket.value);
     Serial.printf("\r\n");
 
-    Serial.printf("getval ");
+    Serial.printf("masked ");
     // Print each bit from MSB to LSB
-    for (int i = sizeof(getval) * 8 - 1; i >= 0; i--) {
-        Serial.printf("%d", (getval >> i) & 1);
+    for (int i = sizeof(masked) * 8 - 1; i >= 0; i--) {
+        Serial.printf("%d", (masked >> i) & 1);
     }
     Serial.printf("\r\n");
 
@@ -179,10 +185,10 @@ void i2c_task (void){
     Serial.printf("%d", inputpacket.enable_mask);
     Serial.printf("\r\n");  
 
-    Serial.printf("inputpacket.direction_mask ");
+    //Serial.printf("inputpacket.direction_mask ");
     // For multiple bytes
-    Serial.printf("%d", inputpacket.direction_mask);
-    Serial.printf("\r\n");  
+    //Serial.printf("%d", inputpacket.direction_mask);
+    //Serial.printf("\r\n");  
 
     Serial.printf("any_alarm_active ");
     // For multiple bytes
@@ -336,7 +342,7 @@ void init_i2c_responder (void){
   gpio_set_dir(ALARMC_PIN, GPIO_IN);             
 
   // Setup I2C0 as slave (peripheral)
-  Serial.printf("Setup I2C\r\n");
+  //Serial.printf("Setup I2C\r\n");
   setup_slave();
   sleep_ms(5);
 
